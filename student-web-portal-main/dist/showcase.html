@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore projects shared by St. Thomas engineering students.">
+  <meta name="theme-color" content="#f4f7fc">
+  <title>Student Showcase | St. Thomas Engineering Showcase</title>
+  <link rel="stylesheet" href="/assets/portal-launch.css">
+  <script defer src="/assets/portal-app.js"></script>
+</head>
+<body data-page="showcase">
+  <header id="site-header"></header>
+  <main class="section-wrap page-main">
+    <div class="page-intro">
+      <p class="eyebrow">Made by your classmates</p>
+      <h1>Student <em>showcase.</em></h1>
+      <p>Explore projects shared by the St. Thomas engineering community.</p>
+    </div>
+    <section id="showcase-controls" class="showcase-controls" aria-label="Search and filter projects" hidden>
+      <label class="showcase-search-field" for="showcase-search">
+        <span>Search projects</span>
+        <input id="showcase-search" type="search" placeholder="Search by student, project, or description">
+      </label>
+      <label class="showcase-department-field" for="showcase-department">
+        <span>Department</span>
+        <select id="showcase-department">
+          <option value="">All departments</option>
+        </select>
+      </label>
+      <p id="showcase-results-count" class="showcase-results-count" aria-live="polite"></p>
+    </section>
+    <div id="showcase-projects" class="showcase-list" aria-live="polite"><p class="loading-state">Loading submitted projects…</p></div>
+    <div id="showcase-no-results" class="empty-state showcase-no-results" hidden>
+      <h2>No matching projects</h2>
+      <p>Try a different search or choose another department.</p>
+    </div>
+  </main>
+  <footer id="site-footer"></footer>
+</body>
+</html>

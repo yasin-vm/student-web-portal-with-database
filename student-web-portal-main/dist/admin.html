@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Manage student profiles and project submissions.">
+  <meta name="theme-color" content="#f4f7fc">
+  <title>Student Management | St. Thomas Engineering Showcase</title>
+  <link rel="stylesheet" href="/assets/portal-launch.css">
+  <script defer src="/assets/portal-app.js"></script>
+</head>
+<body data-page="admin">
+  <header id="site-header"></header>
+  <main class="section-wrap page-main">
+    <div class="admin-heading">
+      <div class="page-intro">
+        <p class="eyebrow">Student management</p>
+        <h1>Keep things <em>in order.</em></h1>
+        <p>Manage student records and keep the project directory up to date.</p>
+      </div>
+      <button class="button button-dark" id="add-student-button" type="button">Add a student <span aria-hidden="true">＋</span></button>
+    </div>
+    <div class="admin-summary"><span id="admin-total">—</span> student records <span class="summary-divider">/</span> <span id="admin-projects">—</span> projects shared</div>
+    <div class="directory-controls admin-filters">
+      <label class="search-field"><span aria-hidden="true">⌕</span><input id="admin-search" type="search" placeholder="Search name, roll number, or email" autocomplete="off"></label>
+      <label class="filter-field"><span>Department</span><select id="admin-department-filter"><option value="">All departments</option></select></label>
+      <label class="filter-field"><span>Semester</span><select id="admin-semester-filter"><option value="">All semesters</option><option value="S1">Semester 1</option><option value="S2">Semester 2</option><option value="S3">Semester 3</option><option value="S4">Semester 4</option><option value="S5">Semester 5</option><option value="S6">Semester 6</option><option value="S7">Semester 7</option><option value="S8">Semester 8</option></select></label>
+      <label class="filter-field"><span>Blood group</span><select id="admin-blood-filter"><option value="">All blood groups</option></select></label>
+      <label class="filter-field"><span>Project status</span><select id="admin-project-filter"><option value="">All projects</option><option value="submitted">Submitted</option><option value="pending">Not submitted</option></select></label>
+      <label class="filter-field"><span>Account status</span><select id="admin-account-filter"><option value="">All accounts</option><option value="enabled">Enabled</option><option value="disabled">Disabled</option><option value="pending">Awaiting approval</option></select></label>
+      <span id="admin-results-count" class="results-count" aria-live="polite">Loading students…</span>
+      <button class="button button-dark" id="download-admin-report" type="button">Download report (.txt)</button>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Student</th><th>Roll no.</th><th>Department</th><th>Semester</th><th>Blood group</th><th>Project</th><th>Account</th><th><span class="sr-only">Actions</span></th></tr></thead>
+        <tbody id="admin-students"><tr><td colspan="8" class="loading-state">Loading student records…</td></tr></tbody>
+      </table>
+    </div>
+    <section id="account-settings" class="admin-account-settings">
+      <div class="page-intro"><p class="eyebrow">Administrator</p><h2>Account settings</h2><p>Change your sign-in email or password. Your current password is required.</p></div>
+      <form id="admin-account-form" class="form-card">
+        <label class="form-field"><span>Current password <i>*</i></span><input name="currentPassword" type="password" required autocomplete="current-password"></label>
+        <label class="form-field"><span>New email address</span><input name="email" type="email" autocomplete="email"></label>
+        <label class="form-field"><span>New password</span><input name="newPassword" type="password" minlength="10" maxlength="128" autocomplete="new-password"><small>Leave blank if you are only changing your email. Minimum 10 characters.</small></label>
+        <button class="button button-dark" type="submit">Save account settings</button>
+        <p id="admin-account-status" class="form-status" aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+  <dialog id="student-dialog" class="student-dialog">
+    <form id="student-form" method="dialog">
+      <div class="dialog-heading"><div><p class="eyebrow">Directory record</p><h2 id="dialog-title">Add a student</h2></div><button type="button" id="dialog-close" class="icon-button" aria-label="Close">×</button></div>
+      <input type="hidden" name="originalRoll">
+      <input type="hidden" name="originalDepartment">
+      <label class="form-field"><span>Full name <i>*</i></span><input name="name" required></label>
+      <div class="form-grid">
+        <label class="form-field"><span>Roll number <i>*</i></span><input name="rollNumber" required></label>
+        <label class="form-field"><span>Department <i>*</i></span><select name="department" required><option value="Computer Science">Computer Science &amp; Engineering</option><option value="Data Science">Data Science</option><option value="Electronics &amp; Communication">Electronics &amp; Communication Engineering</option><option value="Mechanical">Mechanical Engineering</option><option value="Civil">Civil Engineering</option></select></label>
+      </div>
+      <div class="form-grid">
+        <label class="form-field"><span>Semester</span><select name="semester"><option>S1</option><option>S2</option><option>S3</option><option>S4</option><option>S5</option><option>S6</option><option>S7</option><option>S8</option></select></label>
+        <label class="form-field"><span>Email</span><input name="email" type="email"></label>
+      </div>
+      <label class="form-field"><span>Blood group</span><select name="bloodGroup"><option value="">Not provided</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></label>
+      <label class="form-field"><span>Project title</span><input name="websiteTitle" maxlength="160"></label>
+      <label class="form-field"><span>Project description</span><textarea name="websiteDescription" rows="3" maxlength="3000"></textarea></label>
+      <label class="form-field"><span>Account password <i class="password-required">*</i></span><input name="password" type="password" minlength="8" maxlength="128" autocomplete="new-password"><small>Required for a new account. Leave blank to keep the current password when editing.</small></label>
+      <div class="dialog-actions"><button type="button" class="button button-quiet" id="dialog-cancel">Cancel</button><button type="submit" class="button button-dark">Save student <span aria-hidden="true">↗</span></button></div>
+      <p id="dialog-status" class="form-status" aria-live="polite"></p>
+    </form>
+  </dialog>
+  <dialog id="student-password-dialog" class="student-dialog">
+    <form id="student-password-form" method="dialog">
+      <div class="dialog-heading"><div><p class="eyebrow">Student account</p><h2 id="student-password-title">Reset password</h2></div><button type="button" id="student-password-close" class="icon-button" aria-label="Close">×</button></div>
+      <input type="hidden" name="rollNumber">
+      <input type="hidden" name="department">
+      <label class="form-field"><span>New password <i>*</i></span><input name="password" type="password" required minlength="10" maxlength="128" autocomplete="new-password"></label>
+      <label class="form-field"><span>Confirm new password <i>*</i></span><input name="confirmPassword" type="password" required minlength="10" maxlength="128" autocomplete="new-password"></label>
+      <div class="dialog-actions"><button type="button" class="button button-quiet" id="student-password-cancel">Cancel</button><button type="submit" class="button button-dark">Reset password</button></div>
+      <p id="student-password-status" class="form-status" aria-live="polite"></p>
+    </form>
+  </dialog>
+  <footer id="site-footer"></footer>
+</body>
+</html>

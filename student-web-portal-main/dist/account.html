@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Register for a St. Thomas Engineering Showcase student account.">
+  <meta name="theme-color" content="#f4f7fc">
+  <title>Student registration | St. Thomas Engineering Showcase</title>
+  <link rel="stylesheet" href="/assets/portal-launch.css">
+  <script defer src="/assets/portal-app.js"></script>
+</head>
+<body data-page="account">
+  <main class="auth-main">
+    <a class="brand auth-brand" href="/" aria-label="St. Thomas Engineering Showcase">
+      <span class="brand-mark" aria-hidden="true">ST</span>
+      <span class="brand-copy">St. Thomas<small>Engineering Showcase</small></span>
+    </a>
+    <section class="auth-card auth-card-wide">
+      <p class="eyebrow">Student registration</p>
+      <h1>Create your <em>account.</em></h1>
+      <p class="auth-copy">Your student slot is linked to your account. An administrator must approve new registrations before sign-in is enabled.</p>
+      <form id="register-form" class="account-form">
+        <label class="form-field"><span>Full name</span><input name="name" required autocomplete="name" maxlength="120" placeholder="Your full name"></label>
+        <label class="form-field"><span>Email address</span><input name="email" type="email" required autocomplete="email" placeholder="you@example.com"></label>
+        <div class="form-grid">
+          <label class="form-field"><span>Roll number</span><input name="rollNumber" required inputmode="numeric" maxlength="20" placeholder="For example, 01"></label>
+          <label class="form-field"><span>Department</span><select name="department" required><option value="">Loading departments…</option></select></label>
+        </div>
+        <label class="form-field"><span>Password</span><input name="password" type="password" required minlength="8" maxlength="128" autocomplete="new-password" placeholder="At least 8 characters"></label>
+        <button class="button button-dark form-submit" type="submit">Submit registration <span aria-hidden="true">↗</span></button>
+        <p id="account-status" class="form-status" aria-live="polite"></p>
+        <p class="privacy-note">Registration does not give access immediately. The college administrator will verify your student details.</p>
+      </form>
+      <p class="auth-register"><a class="text-link" href="/login.html">Return to sign in <span aria-hidden="true">→</span></a></p>
+    </section>
+    <p class="auth-footer">St. Thomas Engineering Showcase</p>
+  </main>
+</body>
+</html>

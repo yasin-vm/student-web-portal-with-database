@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Browse B.Tech students and discover their projects.">
+  <meta name="theme-color" content="#f4f7fc">
+  <title>Student Directory | St. Thomas Engineering Showcase</title>
+  <link rel="stylesheet" href="/assets/portal-launch.css">
+  <script defer src="/assets/portal-app.js"></script>
+</head>
+<body data-page="students">
+  <header id="site-header"></header>
+  <main class="section-wrap page-main">
+    <div class="page-intro">
+      <p class="eyebrow">The people behind the projects</p>
+      <h1>Meet the <em>makers.</em></h1>
+      <p>Find a student, explore a department, or stumble across something unexpected.</p>
+    </div>
+    <div class="directory-controls directory-filters">
+      <label class="search-field directory-search"><span aria-hidden="true">⌕</span><input id="student-search" type="search" placeholder="Search students by name, roll number, email or project" autocomplete="off"></label>
+      <label class="filter-field"><span>Department</span><select id="department-filter"><option value="">All departments</option></select></label>
+      <label class="filter-field"><span>Semester</span><select id="semester-filter"><option value="">All semesters</option><option value="S1">Semester 1</option><option value="S2">Semester 2</option><option value="S3">Semester 3</option><option value="S4">Semester 4</option><option value="S5">Semester 5</option><option value="S6">Semester 6</option><option value="S7">Semester 7</option><option value="S8">Semester 8</option></select></label>
+      <label class="filter-field"><span>Blood group</span><select id="blood-group-filter"><option value="">All blood groups</option></select></label>
+      <label class="filter-field"><span>Project status</span><select id="directory-project-filter"><option value="">All projects</option><option value="submitted">Submitted</option><option value="pending">Not submitted</option></select></label>
+      <div class="directory-toolbar">
+        <span id="results-count" class="results-count" aria-live="polite">Loading students…</span>
+        <button class="button button-dark" id="download-directory-report" type="button">Download report (.txt)</button>
+      </div>
+    </div>
+    <div id="student-grid" class="student-grid" aria-live="polite"></div>
+    <div id="directory-empty" class="empty-state" hidden><span class="empty-illustration">↗</span><h2>No students found.</h2><p>Try changing your search or filters.</p></div>
+  </main>
+  <footer id="site-footer"></footer>
+</body>
+</html>

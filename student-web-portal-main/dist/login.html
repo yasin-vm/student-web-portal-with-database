@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Sign in to St. Thomas Engineering Showcase.">
+  <meta name="theme-color" content="#f4f7fc">
+  <title>Sign in | St. Thomas Engineering Showcase</title>
+  <link rel="stylesheet" href="/assets/portal-launch.css">
+  <script defer src="/assets/portal-app.js"></script>
+</head>
+<body data-page="login">
+  <main class="auth-main">
+    <a class="brand auth-brand" href="/" aria-label="St. Thomas Engineering Showcase">
+      <span class="brand-mark" aria-hidden="true">ST</span>
+      <span class="brand-copy">St. Thomas<small>Engineering Showcase</small></span>
+    </a>
+    <section class="auth-card">
+      <p class="eyebrow">St. Thomas College · B.Tech community</p>
+      <h1>Welcome <em>back.</em></h1>
+      <p class="auth-copy">Sign in to continue to the Engineering Showcase.</p>
+      <form id="login-form" class="account-form">
+        <label class="form-field"><span>Email address or student login ID</span><input name="email" type="text" required autocomplete="username" placeholder="Email or login ID"></label>
+        <label class="form-field"><span>Password</span><input name="password" type="password" required autocomplete="current-password" placeholder="Your password"></label>
+        <button class="button button-dark form-submit" type="submit">Sign in <span aria-hidden="true">↗</span></button>
+        <p id="login-status" class="form-status" aria-live="polite"></p>
+      </form>
+      <p class="auth-register">New student? <a class="text-link" href="/account.html">Create an account <span aria-hidden="true">→</span></a></p>
+    </section>
+    <p class="auth-footer">St. Thomas Engineering Showcase</p>
+  </main>
+</body>
+</html>
