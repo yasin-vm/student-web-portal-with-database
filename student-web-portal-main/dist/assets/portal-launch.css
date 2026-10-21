@@ -180,6 +180,11 @@ h1, h2 { font-family: var(--serif); font-weight: 500; letter-spacing: -.045em; }
 .form-field > span { color: #475144; font-size: 11px; font-weight: 700; }
 .form-field i { color: var(--clay); font-style: normal; }
 .form-field input, .form-field select, .form-field textarea { width: 100%; min-height: 45px; padding: 11px 12px; border: 1px solid #dce4ef; border-radius: 10px; background: #fff; color: var(--ink); font-size: 12px; }
+.password-input-wrap { position: relative; display: block; }
+.password-input-wrap input { padding-right: 48px; }
+.password-visibility-toggle { position: absolute; top: 50%; right: 7px; width: 36px; height: 36px; display: grid; place-items: center; padding: 0; transform: translateY(-50%); border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+.password-visibility-toggle:hover { background: var(--lime); color: var(--green-dark); }
+.password-visibility-toggle:focus-visible { outline: 2px solid var(--green); outline-offset: 1px; }
 .form-field textarea { resize: vertical; line-height: 1.6; }
 .drop-zone { min-height: 170px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; margin-top: -8px; border: 1px dashed #c1ccda; border-radius: 16px; background: #f7f9fc; cursor: pointer; text-align: center; transition: border .2s, background .2s; }
 .drop-zone:hover, .drop-zone.is-dragging { border-color: var(--green); background: #edf2f9; }
@@ -307,8 +312,11 @@ h1, h2 { font-family: var(--serif); font-weight: 500; letter-spacing: -.045em; }
 .auth-register .text-link { margin-left: 4px; }
 .auth-footer { margin: 0; color: #8792a2; font-size: 11px; }
 .auth-main .form-submit { width: 100%; margin-top: 9px; }
-.project-edit-form { margin-top: 30px; padding-top: 24px; border-top: 1px solid var(--line); }
-.project-edit-form h2 { margin: 0 0 15px; font-size: 20px; font-weight: 650; }
+.dashboard-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.dashboard-actions .button { min-height: 42px; }
+.recovery-note { margin: 18px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.file-selection { display: grid; gap: 5px; margin: 12px 0 0; padding-left: 23px; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+.upload-dashboard-link { margin-top: 8px; }
 .dashboard-card { margin-top: 25px; }
 .admin-table { min-width: 920px; }
 .admin-table td { vertical-align: middle; }
@@ -349,4 +357,9 @@ h1, h2 { font-family: var(--serif); font-weight: 500; letter-spacing: -.045em; }
   .showcase-controls { grid-template-columns: 1fr; align-items: stretch; }
   .showcase-results-count { margin: 0; }
   .showcase-listing { align-items: flex-start; flex-direction: column; padding: 22px; }
+  .dashboard-actions { align-items: stretch; flex-direction: column; }
+  .dashboard-actions .button { width: 100%; }
+  .student-dialog { max-height: calc(100dvh - 24px); padding: 20px; }
+  .dialog-actions { flex-wrap: wrap; }
+  .dialog-actions .button { flex: 1 1 auto; }
 }

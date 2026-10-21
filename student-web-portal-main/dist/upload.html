@@ -24,10 +24,11 @@
       <label class="form-field"><span>A short introduction</span><textarea name="description" rows="3" placeholder="What inspired it? What does it do?"></textarea></label>
       <label class="form-field"><span>Project files <i>*</i></span></label>
       <label class="drop-zone" id="drop-zone">
-        <input id="project-files" type="file" multiple required>
+        <input id="project-files" type="file" multiple required aria-describedby="file-upload-guidance file-selection">
         <span class="upload-symbol">↑</span><strong id="file-label">Drop your files here, or <u>browse</u></strong>
-        <small>Upload a ZIP, a single file, or select multiple project files. Maximum 10 files, 10 MB per file.</small>
+        <small id="file-upload-guidance">Upload a ZIP, a single file, or select multiple project files. Maximum 10 files, 10 MB per file.</small>
       </label>
+      <ul id="file-selection" class="file-selection" aria-live="polite"></ul>
       <div id="upload-status" class="form-status" aria-live="polite"></div>
       <button class="button button-dark form-submit" type="submit">Submit my project <span aria-hidden="true">↗</span></button>
       <p class="privacy-note">By submitting, you confirm these files are yours to share with the college community.</p>

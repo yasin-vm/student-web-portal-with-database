@@ -9,6 +9,8 @@
     Mechanical: 'Mechanical Engineering'
   };
   const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+  const maxUploadFiles = 10;
+  const maxUploadFileSize = 10 * 1024 * 1024;
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[character]);
@@ -48,6 +50,52 @@
   const message = (element, text, isError = false) => {
     element.textContent = text;
     element.className = `form-status${isError ? ' is-error' : ''}`;
+  };
+  const passwordEyeIcon = `
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+      <path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
+      <circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.7"></circle>
+    </svg>`;
+  const passwordEyeOffIcon = `
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+      <path d="m3 3 18 18M10.6 6.2A10.7 10.7 0 0 1 12 6c6.1 0 9.5 6 9.5 6a16 16 0 0 1-3.1 3.7M6.2 6.3C3.8 8 2.5 12 2.5 12s3.4 6 9.5 6c1.2 0 2.3-.3 3.2-.7M9.9 9.9a3 3 0 0 0 4.2 4.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>`;
+  const addPasswordVisibilityToggle = input => {
+    if (input.type !== 'password' || input.closest('.password-input-wrap')) return;
+
+    const wrapper = document.createElement('span');
+    wrapper.className = 'password-input-wrap';
+    const toggle = document.createElement('button');
+    toggle.className = 'password-visibility-toggle';
+    toggle.type = 'button';
+    toggle.setAttribute('aria-label', 'Show password');
+    toggle.setAttribute('aria-pressed', 'false');
+    toggle.title = 'Show password';
+    toggle.innerHTML = passwordEyeIcon;
+    input.parentNode.insertBefore(wrapper, input);
+    wrapper.append(input, toggle);
+
+    toggle.addEventListener('click', () => {
+      const showPassword = input.type === 'password';
+      input.type = showPassword ? 'text' : 'password';
+      toggle.setAttribute('aria-label', showPassword ? 'Hide password' : 'Show password');
+      toggle.setAttribute('aria-pressed', String(showPassword));
+      toggle.title = showPassword ? 'Hide password' : 'Show password';
+      toggle.innerHTML = showPassword ? passwordEyeOffIcon : passwordEyeIcon;
+    });
+  };
+  const setupPasswordVisibility = () => {
+    document.querySelectorAll('input[type="password"]').forEach(addPasswordVisibilityToggle);
+    const observer = new MutationObserver(records => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (!(node instanceof HTMLElement)) continue;
+          if (node.matches('input[type="password"]')) addPasswordVisibilityToggle(node);
+          node.querySelectorAll('input[type="password"]').forEach(addPasswordVisibilityToggle);
+        }
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
   };
   const requestJson = async (url, options = {}) => {
     const response = await fetch(url, { credentials: 'same-origin', ...options });
@@ -193,36 +241,95 @@
           </div>
           <section class="profile-project">
             <p class="eyebrow">Your project</p>
-            <h2>${escapeHtml(student.websiteTitle || (student.websiteSubmitted ? 'Project submitted' : 'No project yet'))}</h2>
-            <p>${escapeHtml(student.websiteDescription || 'Add project details and upload your files to share your work.')}</p>
+            <h2 id="dashboard-project-title">${escapeHtml(student.websiteTitle || (student.websiteSubmitted ? 'Project submitted' : 'No project yet'))}</h2>
+            <p id="dashboard-project-description">${escapeHtml(student.websiteDescription || 'Add project details and upload your files to share your work.')}</p>
             <div class="hero-actions">
               <a class="button button-dark" href="/upload.html">${student.websiteSubmitted ? 'Update project' : 'Upload a project'} <span aria-hidden="true">↗</span></a>
               ${path ? `<a class="text-link" href="${path}" target="_blank" rel="noopener">Open your website</a>` : ''}
             </div>
           </section>
-          <form id="project-details-form" class="project-edit-form">
-            <h2>Edit project details</h2>
-            <label class="form-field"><span>Project title</span><input name="title" maxlength="160" value="${escapeHtml(student.websiteTitle || '')}"></label>
-            <label class="form-field"><span>Description</span><textarea name="description" rows="3" maxlength="3000">${escapeHtml(student.websiteDescription || '')}</textarea></label>
-            <label class="form-field"><span>Semester</span><select name="semester">${Array.from({ length: 8 }, (_, index) => `S${index + 1}`).map(semester => `<option ${student.semester === semester ? 'selected' : ''}>${semester}</option>`).join('')}</select></label>
-            <button class="button button-dark" type="submit">Save project details</button>
-            <p id="project-details-status" class="form-status" aria-live="polite"></p>
-          </form>
+          <div class="dashboard-actions">
+            <button id="project-details-open" class="button button-quiet" type="button">Edit project details</button>
+            <button id="password-settings-open" class="button button-quiet" type="button">Change password</button>
+          </div>
         </div>
-      </section>`;
+      </section>
+      <dialog id="project-details-dialog" class="student-dialog">
+        <form id="project-details-form">
+          <div class="dialog-heading"><div><p class="eyebrow">Your project</p><h2>Edit project details</h2></div><button type="button" class="icon-button" data-close-dialog="project-details-dialog" aria-label="Close">×</button></div>
+          <label class="form-field"><span>Project title</span><input name="title" maxlength="160" value="${escapeHtml(student.websiteTitle || '')}"></label>
+          <label class="form-field"><span>Description</span><textarea name="description" rows="3" maxlength="3000">${escapeHtml(student.websiteDescription || '')}</textarea></label>
+          <label class="form-field"><span>Semester</span><select name="semester">${Array.from({ length: 8 }, (_, index) => `S${index + 1}`).map(semester => `<option ${student.semester === semester ? 'selected' : ''}>${semester}</option>`).join('')}</select></label>
+          <div class="dialog-actions"><button class="button button-quiet" type="button" data-close-dialog="project-details-dialog">Cancel</button><button class="button button-dark" type="submit">Save project details</button></div>
+          <p id="project-details-status" class="form-status" aria-live="polite"></p>
+        </form>
+      </dialog>
+      <dialog id="password-settings-dialog" class="student-dialog">
+        <form id="student-password-settings-form">
+          <div class="dialog-heading"><div><p class="eyebrow">Account security</p><h2>Change password</h2></div><button type="button" class="icon-button" data-close-dialog="password-settings-dialog" aria-label="Close">×</button></div>
+          <p class="form-intro">Enter your current password to set a new one.</p>
+          <label class="form-field"><span>Current password <i>*</i></span><input name="currentPassword" type="password" required autocomplete="current-password"></label>
+          <label class="form-field"><span>New password <i>*</i></span><input name="newPassword" type="password" required minlength="10" maxlength="128" autocomplete="new-password"></label>
+          <label class="form-field"><span>Confirm new password <i>*</i></span><input name="confirmPassword" type="password" required minlength="10" maxlength="128" autocomplete="new-password"></label>
+          <div class="dialog-actions"><button class="button button-quiet" type="button" data-close-dialog="password-settings-dialog">Cancel</button><button class="button button-dark" type="submit">Save new password</button></div>
+          <p id="student-password-settings-status" class="form-status" aria-live="polite"></p>
+        </form>
+      </dialog>`;
     const form = document.getElementById('project-details-form');
     const status = document.getElementById('project-details-status');
+    const projectDialog = document.getElementById('project-details-dialog');
+    const passwordDialog = document.getElementById('password-settings-dialog');
+    document.getElementById('project-details-open').addEventListener('click', () => projectDialog.showModal());
+    document.getElementById('password-settings-open').addEventListener('click', () => passwordDialog.showModal());
+    root.querySelectorAll('[data-close-dialog]').forEach(button => {
+      button.addEventListener('click', () => document.getElementById(button.dataset.closeDialog).close());
+    });
     form.addEventListener('submit', async event => {
       event.preventDefault();
       try {
+        const project = Object.fromEntries(new FormData(form));
         await requestJson(`${api}/student/project`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.fromEntries(new FormData(form)))
+          body: JSON.stringify(project)
         });
+        student.websiteTitle = project.title;
+        student.websiteDescription = project.description;
+        student.semester = project.semester;
+        document.getElementById('dashboard-project-title').textContent = project.title || (student.websiteSubmitted ? 'Project submitted' : 'No project yet');
+        document.getElementById('dashboard-project-description').textContent = project.description || 'Add project details and upload your files to share your work.';
+        root.querySelector('.detail-item:nth-child(2) strong').textContent = project.semester;
         message(status, 'Project details saved.');
+        projectDialog.close();
       } catch (error) {
         message(status, error.message, true);
+      }
+    });
+    const passwordForm = document.getElementById('student-password-settings-form');
+    const passwordStatus = document.getElementById('student-password-settings-status');
+    passwordForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (passwordForm.elements.newPassword.value !== passwordForm.elements.confirmPassword.value) {
+        return message(passwordStatus, 'The new passwords do not match.', true);
+      }
+      const button = passwordForm.querySelector('[type="submit"]');
+      button.disabled = true;
+      try {
+        const result = await requestJson(`${api}/student/account/password`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            currentPassword: passwordForm.elements.currentPassword.value,
+            newPassword: passwordForm.elements.newPassword.value
+          })
+        });
+        message(passwordStatus, result.message);
+        passwordForm.reset();
+        passwordDialog.close();
+      } catch (error) {
+        message(passwordStatus, error.message, true);
+      } finally {
+        button.disabled = false;
       }
     });
   }
@@ -232,31 +339,66 @@
     const input = document.getElementById('project-files');
     const status = document.getElementById('upload-status');
     const label = document.getElementById('file-label');
+    const fileList = document.getElementById('file-selection');
+    const submitButton = form.querySelector('[type="submit"]');
+    const formatFileSize = bytes => `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
     input.addEventListener('change', () => {
-      label.textContent = `${input.files.length} file${input.files.length === 1 ? '' : 's'} selected`;
+      const files = Array.from(input.files);
+      fileList.replaceChildren();
+      if (!files.length) {
+        label.textContent = 'Drop your files here, or browse';
+        message(status, '');
+        submitButton.disabled = false;
+        return;
+      }
+
+      label.textContent = `${files.length} file${files.length === 1 ? '' : 's'} selected`;
+      files.forEach(file => {
+        const item = document.createElement('li');
+        item.textContent = `${file.name} · ${formatFileSize(file.size)}`;
+        fileList.append(item);
+      });
+      const oversizedFile = files.find(file => file.size > maxUploadFileSize);
+      if (files.length > maxUploadFiles) {
+        message(status, `Choose no more than ${maxUploadFiles} files.`, true);
+        submitButton.disabled = true;
+      } else if (oversizedFile) {
+        message(status, `${oversizedFile.name} is larger than the 10 MB per-file limit.`, true);
+        submitButton.disabled = true;
+      } else {
+        message(status, `${files.length} file${files.length === 1 ? '' : 's'} ready to submit.`);
+        submitButton.disabled = false;
+      }
     });
     form.addEventListener('submit', async event => {
       event.preventDefault();
       if (!input.files.length) return message(status, 'Choose at least one project file.', true);
-      if (input.files.length > 10) return message(status, 'You can upload at most 10 files at a time.', true);
+      if (input.files.length > maxUploadFiles) return message(status, `You can upload at most ${maxUploadFiles} files at a time.`, true);
       const files = Array.from(input.files);
+      const oversizedFile = files.find(file => file.size > maxUploadFileSize);
+      if (oversizedFile) return message(status, `${oversizedFile.name} is larger than the 10 MB per-file limit.`, true);
       const data = new FormData(form);
       data.delete('project-files');
       files.forEach(file => {
         data.append(files.length === 1 ? 'assignmentFile' : 'assignmentFiles', file);
         if (files.length > 1) data.append('paths', file.webkitRelativePath || file.name);
       });
-      const button = form.querySelector('[type="submit"]');
-      button.disabled = true;
+      submitButton.disabled = true;
       try {
         const result = await requestJson(`${api}/assignments/self-submit`, { method: 'POST', body: data });
-        message(status, `${result.message} You can review it on your dashboard.`);
+        message(status, `${result.message} Your submission is complete.`);
+        const dashboardLink = document.createElement('a');
+        dashboardLink.className = 'button button-quiet upload-dashboard-link';
+        dashboardLink.href = '/dashboard.html';
+        dashboardLink.textContent = 'View my dashboard';
+        status.append(document.createElement('br'), dashboardLink);
         input.value = '';
+        fileList.replaceChildren();
         label.textContent = 'Drop your files here, or browse';
       } catch (error) {
         message(status, error.message, true);
       } finally {
-        button.disabled = false;
+        submitButton.disabled = false;
       }
     });
   }
@@ -585,6 +727,7 @@
     if (page === 'showcase') return setupShowcase(session);
   }
 
+  setupPasswordVisibility();
   run().catch(error => {
     console.error('Page setup failed:', error);
     const main = document.querySelector('main');

@@ -45,6 +45,13 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/assets', express.static(path.join(distPath, 'assets'), { index: false }));
 
+app.get('/healthz', (req, res) => {
+  const databaseReady = mongoose.connection.readyState === 1;
+  res.status(databaseReady ? 200 : 503).json({
+    status: databaseReady ? 'ok' : 'unavailable'
+  });
+});
+
 app.get(/^\/api\/showcase\/sites\/([a-f\d]{24})\/(.+)$/i, (req, res, next) => {
   const studentId = req.params[0];
   if (!isShowcaseAssetTokenValid(req.query.access, studentId)) return next();
@@ -535,6 +542,27 @@ app.patch('/api/admin/account-settings', requireRole('admin'), async (req, res, 
     res.json({ message: 'Account settings updated.', user: publicUser(req.user) });
   } catch (error) {
     if (error.code === 11000) return res.status(409).json({ message: 'That email address is already in use.' });
+    next(error);
+  }
+});
+
+app.patch('/api/student/account/password', requireRole('student'), async (req, res, next) => {
+  try {
+    const currentPassword = String(req.body.currentPassword || '');
+    const newPassword = String(req.body.newPassword || '');
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Enter your current password and a new password.' });
+    }
+    if (newPassword.length < 10 || newPassword.length > 128) {
+      return res.status(400).json({ message: 'Your new password must be between 10 and 128 characters long.' });
+    }
+    if (!(await req.user.comparePassword(currentPassword))) {
+      return res.status(401).json({ message: 'Your current password is incorrect.' });
+    }
+    req.user.password = newPassword;
+    await req.user.save();
+    res.json({ message: 'Your password was changed successfully.' });
+  } catch (error) {
     next(error);
   }
 });

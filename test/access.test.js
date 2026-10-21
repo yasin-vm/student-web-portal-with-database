@@ -213,6 +213,10 @@ test.after(async () => {
 });
 
 test('root is login-first and unauthenticated API access is rejected', async () => {
+  const health = await fetch(`${baseUrl}/healthz`);
+  assert.equal(health.status, 503);
+  assert.deepEqual(await health.json(), { status: 'unavailable' });
+
   const page = await fetch(baseUrl);
   assert.equal(page.status, 200);
   assert.match(await page.text(), /data-page="login"/);
@@ -430,6 +434,42 @@ test('admin account settings require current password and keep the cookie sessio
   const sameSession = await fetch(`${baseUrl}/api/auth/me`, { headers: { Cookie: cookie } });
   assert.equal(sameSession.status, 200);
   assert.equal((await sameSession.json()).user.email, 'updated-admin@example.invalid');
+});
+
+test('students can change their own password only after verifying their current password', async () => {
+  const { cookie } = await signIn(studentUser.email, 'test-password-123');
+  const endpoint = `${baseUrl}/api/student/account/password`;
+  const headers = { Cookie: cookie, 'Content-Type': 'application/json' };
+  const { cookie: adminCookie } = await signIn(admin.email, 'new-admin-password-123');
+  const adminAttempt = await fetch(endpoint, {
+    method: 'PATCH',
+    headers: { Cookie: adminCookie, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ currentPassword: 'new-admin-password-123', newPassword: 'admin-changed-password-123' })
+  });
+  assert.equal(adminAttempt.status, 403);
+
+  const wrongCurrentPassword = await fetch(endpoint, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ currentPassword: 'incorrect-password', newPassword: 'student-changed-password-123' })
+  });
+  assert.equal(wrongCurrentPassword.status, 401);
+
+  const shortPassword = await fetch(endpoint, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ currentPassword: 'test-password-123', newPassword: 'short' })
+  });
+  assert.equal(shortPassword.status, 400);
+
+  const changed = await fetch(endpoint, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ currentPassword: 'test-password-123', newPassword: 'student-changed-password-123' })
+  });
+  assert.equal(changed.status, 200);
+  assert.equal(await studentUser.comparePassword('student-changed-password-123'), true);
+  assert.equal((await signIn(studentUser.email, 'student-changed-password-123')).response.status, 200);
 });
 
 test('admin can reset a student password with a minimum of ten characters', async () => {
