@@ -11,5 +11,6 @@ ys
 ## Upload and account guidance
 
 - Project uploads are limited to 10 files, with a maximum of 10 MB per file.
+- Each student has one showcase project. A new upload replaces the previous project only after all new files have uploaded successfully.
 - Student password changes require the current password and a new password of at least 10 characters.
 - Student showcase cards show project information, not private account contact details.

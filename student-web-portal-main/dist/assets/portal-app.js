@@ -334,13 +334,16 @@
     });
   }
 
-  function setupUpload() {
+  function setupUpload(session) {
     const form = document.getElementById('upload-form');
     const input = document.getElementById('project-files');
     const status = document.getElementById('upload-status');
     const label = document.getElementById('file-label');
     const fileList = document.getElementById('file-selection');
     const submitButton = form.querySelector('[type="submit"]');
+    form.elements.semester.value = session.student?.semester || 'S7';
+    form.elements.title.value = session.student?.websiteTitle || '';
+    form.elements.description.value = session.student?.websiteDescription || '';
     const formatFileSize = bytes => `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
     input.addEventListener('change', () => {
       const files = Array.from(input.files);
@@ -720,7 +723,7 @@
     const session = await renderShell();
     if (!session) return;
     if (page === 'dashboard') return setupDashboard(session);
-    if (page === 'upload') return setupUpload();
+    if (page === 'upload') return setupUpload(session);
     if (page === 'admin') return setupAdmin(session);
     if (page === 'students') return setupDirectory();
     if (page === 'profile') return setupProfile();

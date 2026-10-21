@@ -1,4 +1,5 @@
 const express = require('express');
+const { randomUUID } = require('node:crypto');
 const fs = require('node:fs');
 const fsPromises = require('node:fs/promises');
 const mongoose = require('mongoose');
@@ -266,6 +267,23 @@ async function deleteStudentFiles(student) {
       }
     }
   }
+}
+
+async function replaceStudentProjectFiles(student, uploadedFiles, storageBucket = bucket) {
+  const previousFiles = student.files || [];
+  student.files = uploadedFiles;
+  await student.save();
+
+  const cleanupErrors = [];
+  for (const entry of previousFiles) {
+    if (!entry.fileId) continue;
+    try {
+      await storageBucket.delete(new ObjectId(entry.fileId));
+    } catch (error) {
+      if (error.code !== 'ENOENT') cleanupErrors.push(error);
+    }
+  }
+  return cleanupErrors;
 }
 
 async function findStudentByIdentity(rollNumber, department) {
@@ -933,14 +951,16 @@ app.delete('/api/students/:rollNumber/project', requireRole('admin'), async (req
 
 app.post('/api/assignments/self-submit', requireRole('student'), upload.any(), async (req, res, next) => {
   const storedIds = [];
+  let submissionSaved = false;
   try {
     const student = await Student.findOne({ userId: req.user._id });
     if (!student) return res.status(404).json({ message: 'Your student profile could not be found.' });
     if (!req.files?.length) return res.status(400).json({ message: 'Please select at least one project file.' });
 
+    const replacingProject = Boolean(student.websiteSubmitted || student.files?.length);
     const rollNumber = student.rollNumber;
     const department = student.department;
-    const folderKey = `${department.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${rollNumber}`;
+    const folderKey = `${department.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${rollNumber}_${randomUUID()}`;
     const uploadedFiles = [];
     const firstFile = req.files[0];
     const isZip = req.files.length === 1
@@ -1005,30 +1025,39 @@ app.post('/api/assignments/self-submit', requireRole('student'), upload.any(), a
       }
     }
 
-    student.files.push(...uploadedFiles);
     student.websiteSubmitted = true;
     student.submissionDate = new Date();
-    if (req.body.title) student.websiteTitle = String(req.body.title).trim().slice(0, 160);
-    if (req.body.description) student.websiteDescription = String(req.body.description).trim().slice(0, 3000);
+    student.websiteTitle = String(req.body.title || '').trim().slice(0, 160);
+    student.websiteDescription = String(req.body.description || '').trim().slice(0, 3000);
     if (req.body.semester) student.semester = String(req.body.semester).trim();
     student.websitePath = entryHtml
       ? `submissions/${folderKey}/${entryHtml}`
       : `submissions/${folderKey}/${uploadedFiles[0].filename}`;
-    await student.save();
+    const cleanupErrors = await replaceStudentProjectFiles(student, uploadedFiles);
+    submissionSaved = true;
+    if (cleanupErrors.length) {
+      cleanupErrors.forEach(error => console.error('Could not remove replaced project file:', error));
+    }
 
     res.json({
       success: true,
-      message: `Project submitted successfully. Stored ${uploadedFiles.length} file(s).`,
+      message: cleanupErrors.length
+        ? `Project ${replacingProject ? 'replaced' : 'submitted'} successfully. Stored ${uploadedFiles.length} file(s), but some old files could not be removed. Contact the administrator.`
+        : `Project ${replacingProject ? 'replaced' : 'submitted'} successfully. Stored ${uploadedFiles.length} file(s).`,
       rollNumber,
       department,
-      filesCount: uploadedFiles.length
+      filesCount: uploadedFiles.length,
+      replaced: replacingProject,
+      cleanupWarning: cleanupErrors.length > 0
     });
   } catch (error) {
-    for (const id of storedIds) {
-      try {
-        await bucket.delete(id);
-      } catch (cleanupError) {
-        console.error('Could not remove incomplete project upload:', cleanupError);
+    if (!submissionSaved) {
+      for (const id of storedIds) {
+        try {
+          await bucket.delete(id);
+        } catch (cleanupError) {
+          console.error('Could not remove incomplete project upload:', cleanupError);
+        }
       }
     }
     next(error);
@@ -1136,4 +1165,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, startServer };
+module.exports = { app, startServer, replaceStudentProjectFiles };

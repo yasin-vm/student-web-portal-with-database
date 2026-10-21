@@ -9,7 +9,7 @@ const bcrypt = require('bcryptjs');
 const path = require('node:path');
 const User = require('../models/User');
 const Student = require('../models/Student');
-const { app } = require('../server');
+const { app, replaceStudentProjectFiles } = require('../server');
 
 const objectId = () => new mongoose.Types.ObjectId();
 const admin = makeUser({ name: 'Test Admin', email: 'admin-test@example.invalid', role: 'admin' });
@@ -527,6 +527,49 @@ test('student uploads are capped at ten files', async () => {
   });
 
   assert.equal(response.status, 413);
+});
+
+test('replacing a student project saves new files before removing old files', async () => {
+  const oldFileId = objectId();
+  const newFile = { filename: 'new/index.html', fileId: objectId(), contentType: 'text/html' };
+  const events = [];
+  const student = {
+    files: [{ fileId: oldFileId }],
+    async save() {
+      events.push('save');
+      assert.deepEqual(this.files, [newFile]);
+    }
+  };
+  const storageBucket = {
+    async delete(fileId) {
+      events.push(`delete:${fileId.toString()}`);
+    }
+  };
+
+  const cleanupErrors = await replaceStudentProjectFiles(student, [newFile], storageBucket);
+
+  assert.deepEqual(cleanupErrors, []);
+  assert.deepEqual(events, ['save', `delete:${oldFileId.toString()}`]);
+  assert.deepEqual(student.files, [newFile]);
+});
+
+test('failed project replacement does not delete previous files', async () => {
+  const oldFileId = objectId();
+  const student = {
+    files: [{ fileId: oldFileId }],
+    async save() {
+      throw new Error('database unavailable');
+    }
+  };
+  let deleteCalled = false;
+  const storageBucket = {
+    async delete() {
+      deleteCalled = true;
+    }
+  };
+
+  await assert.rejects(replaceStudentProjectFiles(student, [], storageBucket), /database unavailable/);
+  assert.equal(deleteCalled, false);
 });
 
 test('student uploads are capped at ten megabytes per file', async () => {
